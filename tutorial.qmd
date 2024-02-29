@@ -4,3 +4,137 @@ format: html
 editor: visual
 ---
 
+```{r}
+# Load required libraries
+library(tidyverse)
+library(multitool)
+```
+
+# Overview of the steps we are going to take
+
+1. Incrementally build up the multiverse pipeline (e.g., filters, variables, statistical models, post-processing).
+
+2. Checking our multiverse pipeline for potential mistakes.
+
+3. Expanding the pipeline specification.
+
+3. Running the multiverse analysis.
+
+4. Extracting and visualizing results.
+
+# 1. Building the multiverse pipeline
+
+## Filtering decisions
+
+The first step in the multiverse analysis is deciding which data filtering decisions we want to include. We decided including or excluding participants who:
+
+1. Scored below 0.5 on a build-in bot-detection measure on Prolific (potentially indicating a bot);
+2. Did not enter fullscreen mode prior to starting the tasks;
+3. Exited fullscreen mode at any point during the tasks;
+4. Indicated high levels of noise in their environment;
+5. Indicated that they were interrupted during the experiment.
+
+To add these filtering decisions to our multiverse pipeline, we use the `add_filters()` function of the multitool function. The multiverse pipeline always starts with the raw data. We then build out the pipeline from there by creating a tidyverse-style pipeline.
+
+Run the following code:
+
+```{r}
+pipeline |> 
+  add_filters(
+    bot_detection == 0, # Only keep participants who passed bot detection
+    fullscr_enter == 0, # Only keep participants who entered fullscreen
+    fullscr_exit  == 0, # Only keep participants who stayed in fullscreen
+    noise         == 0, # Only keep participants with low environmental noise
+    interrupted   == 0  # Only keep participants who were not interrupted
+  )
+```
+
+Note that for each decision, `multitool` adds a decision group label, and automatically adds the version of the decision in which all participants are included (e.g., `bot_detection %in% unique(bot_detection)`).  
+
+## Looping over variables
+
+Sometimes, we might want to 
+
+
+# 2. Checking our pipeline for potential mistakes
+
+**See https://ethan-young.github.io/multitool/articles/validate-your-blueprint.html for more examples**
+
+Making a multiverse pipeline is straightforward, but it is easy to make mistakes. One thing that is important to check is how many participants are excluded under particular filtering decisions:
+
+```{r}
+summarize_filter_ns(full_pipeline)
+```
+
+*EXERCISE 1*: Is there anything that we want to fix in our pipeline?
+
+
+It is also possible to assess the size of our multiverse pipeline. For example, we can see..
+
+the size of the full multiverse:
+
+```{r}
+detect_multiverse_n(full_pipeline)
+```
+
+The number of unique filtering decisions:
+
+```{r}
+detect_n_filters(full_pipeline)
+```
+
+# 3. Expanding the pipeline specification
+
+Once we are satisfied with our pipeline specification, we can expand it and test it further. To do so, expand into a full decision grid:
+
+```{r}
+expanded_pipeline <- expand_decisions(full_pipeline)
+```
+
+The full, expanded decision grid has a special feature: it stores the code for each individual analysis pipeline in the multiverse. This means that it is very easy to check the code that is used to generate a specific analysis pipeline in our multiverse.
+
+For example, we can look at the code that takes care of the data filtering in the first analysis pipeline:
+
+```{r}
+show_code_filter(expanded_pipeline, decision_num = 1)
+```
+
+We can also look at the code that runs the model in the 12th analysis pipeline:
+
+```{r}
+show_code_model(expanded_pipeline, decision_num = 12)
+```
+
+Setting the `copy` argument to TRUE sends the code straight to your clipboard. This is nice for debugging if the multiverse analysis throws an error and you want to understand better what's going wrong.
+
+
+# 4. Running the multiverse analysis.
+
+Once we're confident that we correctly specified the multiverse pipeline, it's time to actually run the multiverse analysis!
+
+```{r}
+multiverse_results <- run_multiverse(expanded_pipeline)
+```
+
+The time it takes to run the multiverse analysis depends on the number of analysis pipelines in the multiverse and the complexity of the model(s). In our relatively simple example, it should not take more than a few seconds.
+
+The resulting tibble consists of one line per analysis pipeline (indexed with the `decision` variable). The results are nested in list columns:
+
+```{r}
+multiverse_results
+```
+
+# 5. Unpacking the multiverse results
+
+```{r}
+reveal
+```
+
+
+# Testing the decision grid
+
+
+# Analyzing the multiverse
+
+
+# Visualizing the multiverse
