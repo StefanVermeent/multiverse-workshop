@@ -8,6 +8,8 @@ editor: visual
 # Load required libraries
 library(tidyverse)
 library(multitool)
+library(lme4)
+library(specr)
 ```
 
 
