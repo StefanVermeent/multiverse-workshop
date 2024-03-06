@@ -4,18 +4,69 @@ format: html
 editor: visual
 ---
 
-```{r}
+```{r include = FALSE}
 # Load required libraries
 library(tidyverse)
 library(multitool)
 library(lme4)
+library(performance)
 library(specr)
+library(ggsci)
 ```
-
 
 ```{r}
 # Load data
-read_csv("data.csv")
+data <- read_csv("data.csv") 
+  
+data
+
+data2 <- data |> 
+mutate(
+  unp7 = unp + rnorm(n(), 0, 1),
+  unp8 = unp + rnorm(n(), 0, 1),
+  unp9 = unp + rnorm(n(), 0, 1),
+  unp10 = unp + rnorm(n(), 0, 1),
+  unp11 = unp + rnorm(n(), 0, 1),
+  unp12 = unp + rnorm(n(), 0, 1),
+  unp13 = unp + rnorm(n(), 0, 1),
+  unp14 = unp + rnorm(n(), 0, 1),
+  unp15 = unp + rnorm(n(), 0, 1),
+  unp16 = unp + rnorm(n(), 0, 1),
+  unp17 = unp + rnorm(n(), 0, 1),
+  unp18 = unp + rnorm(n(), 0, 1),
+  unp19 = unp + rnorm(n(), 0, 1),
+  unp20 = unp + rnorm(n(), 0, 5),
+  unp21 = unp + rnorm(n(), 0, 1),
+  unp22 = unp + rnorm(n(), 0, 1),
+  unp23 = unp + rnorm(n(), 0, 1),
+  unp24 = unp + rnorm(n(), 0, 1),
+  unp25 = unp + rnorm(n(), 0, 1),
+  unp26 = unp + rnorm(n(), 0, 1),
+  unp27 = unp + rnorm(n(), 0, 1),
+  unp28 = unp + rnorm(n(), 0, 1),
+  unp29 = unp + rnorm(n(), 0, 4),
+  unp30 = unp + rnorm(n(), 0, 1),
+  unp31 = unp + rnorm(n(), 0, 1),
+  unp32 = unp + rnorm(n(), 0, 1),
+  unp33 = unp + rnorm(n(), 0, 1),
+  unp34 = unp + rnorm(n(), 0, 1),
+  unp35 = unp + rnorm(n(), 0, 3),
+  unp36 = unp + rnorm(n(), 0, 1),
+  unp37 = unp + rnorm(n(), 0, 1),
+  unp38 = unp + rnorm(n(), 0, 1),
+  unp39 = unp + rnorm(n(), 0, 1),
+  unp40 = unp + rnorm(n(), 0, 1),
+  unp41 = unp + rnorm(n(), 0, 1),
+  unp42 = unp + rnorm(n(), 0, 5),
+  unp43 = unp + rnorm(n(), 0, 1),
+  unp44 = unp + rnorm(n(), 0, 1),
+  unp45 = unp + rnorm(n(), 0, 1),
+  unp46 = unp + rnorm(n(), 0, 1),
+  unp47 = unp + rnorm(n(), 0, 1),
+  unp48 = unp + rnorm(n(), 0, 1),
+  unp49 = unp + rnorm(n(), 0, 1),
+  unp50 = unp + rnorm(n(), 0, 1),
+)  
 ```
 
 # 1. Building the multiverse pipeline
@@ -24,12 +75,12 @@ read_csv("data.csv")
 
 The first step in the multiverse analysis is deciding which data filtering decisions we want to include. We decided including or excluding participants who:
 
-1. Scored below 0.5 on a build-in bot-detection measure on Prolific (potentially indicating a bot);
-2. Did not enter fullscreen mode prior to starting the tasks;
-3. Exited fullscreen mode at any point during the tasks;
-4. Indicated high levels of noise in their environment (three options: score < 2, score < 4, include all);
-5. Indicated that they were interrupted during the experiment.
-6. Indicated that they got up at some point during the experiment.
+1.  Scored below 0.5 on a build-in bot-detection measure on Prolific (potentially indicating a bot);
+2.  Did not enter fullscreen mode prior to starting the tasks;
+3.  Exited fullscreen mode at any point during the tasks;
+4.  Indicated high levels of noise in their environment (three options: score \< 2, score \< 4, include all);
+5.  Indicated that they were interrupted during the experiment.
+6.  Indicated that they got up at some point during the experiment.
 
 To add these filtering decisions to our multiverse pipeline, we use the `add_filters()` function of the multitool function. The multiverse pipeline always starts with the raw data. We then build out the pipeline from there by creating a tidyverse-style pipeline.
 
@@ -39,26 +90,15 @@ Run the following code:
 data |> 
   add_filters(
     bot_detection    > 0.4, # Only keep participants who passed bot detection
-    fullscreenenter == 1, # Only keep participants who entered fullscreen
-    fullscreenexit  == 1, # Only keep participants who stayed in fullscreen
-    noise            < 2, # Only keep participants who reported noise-level of 0 or 1 (on scale of 0-4)
-    noise            < 4, # Only keep participants who reported noise-level of 0-3 (on scale of 0-4)
-    interrupted     == 0,  # Only keep participants who were not interrupted
-    getup           == 0
+    fullscreenenter == 1,   # Only keep participants who entered fullscreen
+    fullscreenexit  == 1,   # Only keep participants who stayed in fullscreen
+    noise            < 2,   # Only keep participants who reported noise-level of 0 or 1 (on scale of 0-4)
+    noise            < 4,   # Only keep participants who reported noise-level of 0-3 (on scale of 0-4)
+    interrupted     == 0,   # Only keep participants who were not interrupted
+    getup           == 0    # Only keep participants who did not get up during the experiment
   )
 ```
 
-Note that for each decision, `multitool` adds a decision group label, and automatically adds the version of the decision in which all participants are included (e.g., `bot_detection %in% unique(bot_detection)`).  
-
-
-## 1.2. Adding variables
-
-It is also possible to include multiple independent or dependent variables to loop over. In our case, we have two IVs: exposure to violence (`vio`) and exposure to unpredictability (`unp`). We want to apply the exact same multiverse to both, so adding them at the same time is convenient:
-
-```{r}
-data |> 
-  add_variables(var_group = "iv", vio, unp)
-```
 
 
 ## 1.3. Adding pre-processing steps
@@ -67,17 +107,15 @@ Sometimes, we want to include some final pre-processing steps *after* filtering 
 
 ```{r}
 data |> 
-  add_preprocess(process_name = "std", code = "mutate({iv} = scale({iv}) |> as.numeric())")
+  add_preprocess(process_name = "std", code = "mutate(unp = scale(unp) |> as.numeric())")
 ```
-
 
 ## 1.4. Adding the model
 
 ```{r}
 data |> 
-  add_model(model_desc = "lm", code = lm(global_local ~ {iv}))
+  add_model(model_desc = "lm", code = lm(shifting ~ iv))
 ```
-
 
 ## 1.5. Creating the full multiverse pipeline
 
@@ -88,19 +126,18 @@ full_pipeline <- data |>
   add_filters(
     bot_detection    > 0.4, # Only keep participants who passed bot detection
     fullscreenenter == 1, # Only keep participants who entered fullscreen
-    fullscreenexit  == 1, # Only keep participants who stayed in fullscreen
+    fullscreenexit  == 0, # Only keep participants who stayed in fullscreen
     noise            < 2, # Only keep participants who reported noise-level of 0 or 1 (on scale of 0-4)
     noise            < 4,
     interrupted      == 0,  # Only keep participants who were not interrupted
     getup            == 0
   ) |> 
-  add_variables(var_group = "iv", vio, unp) |> 
-  add_preprocess(process_name = "std", code = "mutate({iv} = scale({iv}) |> as.numeric())") |> 
-  add_model(model_desc = "lm", code = lm(global_local ~ {iv}))
+ # add_variables(var_group = "iv", unp) |> 
+  add_preprocess(process_name = "std", code = "mutate(unp = scale(unp) |> as.numeric())") |> 
+  add_model(model_desc = "lm", code = lm(shifting ~ unp))
 
 full_pipeline
 ```
-
 
 # 2. Checking our pipeline for potential mistakes
 
@@ -113,7 +150,6 @@ summarize_filter_ns(full_pipeline)
 ```
 
 *EXERCISE 1*: Is there anything that we want to fix in our pipeline?
-
 
 It is also possible to assess the size of our multiverse pipeline. For example, we can see..
 
@@ -134,7 +170,6 @@ We can also visualize our multiverse pipeline with a graph:
 ```{r}
 create_blueprint_graph(full_pipeline)
 ```
-
 
 # 3. Expanding the pipeline specification
 
@@ -162,13 +197,12 @@ show_code_model(expanded_pipeline, decision_num = 12, copy = TRUE)
 
 Setting the `copy` argument to TRUE sends the code straight to your clipboard. This is nice for debugging if the multiverse analysis throws an error and you want to understand better what's going wrong.
 
-
 # 4. Running the multiverse analysis.
 
 Once we're confident that we correctly specified the multiverse pipeline, it's time to actually run the multiverse analysis!
 
 ```{r}
-multiverse_results <- run_multiverse(expanded_pipeline)
+multiverse_results01 <- run_multiverse(expanded_pipeline)
 ```
 
 The time it takes to run the multiverse analysis depends on the number of analysis pipelines in the multiverse and the complexity of the model(s). In our relatively simple example, it should not take more than 2-3 minutes.
@@ -176,31 +210,35 @@ The time it takes to run the multiverse analysis depends on the number of analys
 The resulting tibble consists of one line per analysis pipeline (indexed with the `decision` variable). The results are nested in list columns:
 
 ```{r}
-multiverse_results
+multiverse_results01
 ```
 
 # 5. Unpacking the multiverse results
 
 ```{r}
-mod_summary <- reveal_model_parameters(multiverse_results, .unpack_specs = "wide")
+mod_summary01 <- reveal_model_parameters(multiverse_results01, .unpack_specs = "wide")
+
+mod_summary01
 ```
 
 Using `condense`, we can summarise specific results. Let's start by summarizing the regression coefficients.
 
 ```{r}
-mod_coef <- mod_summary |> 
-  filter(parameter %in% c("unp", "vio")) |>
-  group_by(iv) |>
+mod_coef01 <- mod_summary01 |> 
+  filter(parameter == "unp") |>
   condense(.what = coefficient, .how = list(median = median))
+
+mod_coef01
 ```
 
 Now let's calculate the proportion of p-values that were significant across the entire multiverse, grouped by IV:
 
 ```{r}
-mod_p <- mod_summary |> 
-  filter(parameter %in% c("unp", "vio")) |>
-  group_by(iv) |>
+mod_p <- mod_summary01 |> 
+  filter(parameter == "unp") |>
   condense(.what = p, .how = ~sum(.x < .05)/n())
+
+mod_p
 ```
 
 # 6. Visualizing the multiverse
@@ -238,15 +276,13 @@ theme_set(
 pval_colors <- c("sig" = "#006D77", "non-sig" = "gray70")
 ```
 
-
 There are several types of plots that we can create to visualize the multiverse.
 
 ## 6.1. Effect Curve Plot
 
 ```{r}
-mod_summary |>
-  filter(parameter %in% c("unp", "vio")) |> 
-  group_by(iv) |> 
+mod_summary01 |>
+  filter(parameter == "unp") |> 
   arrange(coefficient) |> # Arrange coefficients from smallest to largest
   mutate(
     p_sig = ifelse(p < .05, "sig", "non-sig"),  # Significant yes or no? Used for coloring the points 
@@ -263,7 +299,7 @@ mod_summary |>
   geom_point(size = 3, shape = 19, show.legend = F) + 
   geom_hline(aes(yintercept = 0), size = .5, linetype = "solid") +
   geom_point( # Add a single point showing the median estimate
-    data = mod_coef, # Using the summarized median coefficients we created above
+    data = mod_coef01, # Using the summarized median coefficients we created above
     aes(x = 48, y = coefficient_median),
     shape = 1,
     size = 3,
@@ -273,7 +309,7 @@ mod_summary |>
     inherit.aes = F
     ) +
   geom_text( # Add the median coefficient in text
-        data = mod_coef,
+        data = mod_coef01,
         aes(y = coefficient_median, label = paste0("\u03b2\ = ", as.character(round(coefficient_median,2))), x = 48),
         nudge_y = -.01,
         size = 3,
@@ -287,7 +323,6 @@ mod_summary |>
         show.legend = F,
         inherit.aes = F
       ) +
-    facet_wrap(~iv) +
     scale_color_manual(values = pval_colors) +
       labs(
         y = "Coefficient (standardized)\n",
@@ -299,10 +334,11 @@ mod_summary |>
         axis.line.x = element_blank()
       )
 ```
+
 ## 6.2. P-distribution plot
 
 ```{r}
-mod_summary |> 
+mod_summary01 |> 
   ggplot(aes(p)) +
   geom_histogram(color = "black", size = .2, bins = 100) +
   geom_vline(aes(xintercept = .05), linetype = "dashed") + # Add a line indicationg p = .05
@@ -313,7 +349,6 @@ mod_summary |>
     show.legend = F,
     inherit.aes = F
   ) +
-  facet_wrap(~iv) +
   scale_x_continuous(breaks = seq(0, 1, 0.1)) +
   scale_y_continuous("Freq\n") 
 ```
@@ -321,23 +356,18 @@ mod_summary |>
 ## 6.3. Portion of explained variance of each decision
 
 ```{r}
-variance_model <- 
-  c("unp", "vio") |> 
-  map(function(x) {
-    var_fit <- mod_summary |> 
-      filter(parameter == x) |> 
-      lmer(data = _, coefficient ~ 1 + (1|bot_detection) + (1|fullscreenenter) + (1|fullscreenexit) + (1|noise) + (1|interrupted) + (1|getup))
-    
-    specr::icc_specs(var_fit) |> 
-      as_tibble() |> 
-      mutate(iv = x)
-  }) |> 
-  bind_rows()
+var_fit <- mod_summary01 |> 
+  filter(parameter == "unp") |> 
+  lmer(data = _, coefficient ~ 1 + (1|bot_detection) + (1|fullscreenenter) + (1|fullscreenexit) + (1|noise) + (1|interrupted) + (1|getup))
+
+variance_model <- specr::icc_specs(var_fit) |> 
+  as_tibble() |> 
+  mutate(iv = "unp")
+
 
 variance_model |> 
       ggplot(aes(grp, percent, fill = grp)) +
       geom_bar(stat = "identity") +
-      facet_wrap(~iv) +
       scale_fill_uchicago() +
       coord_flip() +
       guides(fill = 'none') +
@@ -346,4 +376,120 @@ variance_model |>
         y = "Explained variance in estimate (%)"
       )
 ```
+
+# Example 2: Multiple measures of the same construct
+
+```{r}
+full_pipeline02 <- data02 |> 
+  add_variables(var_group = "iv", starts_with('unp')) |> 
+  add_preprocess(process_name = "std", code = "mutate({iv} = scale({iv}) |> as.numeric())") |> 
+  add_model(model_desc = "lm", code = lm(shifting ~ {iv})) |> 
+  add_reliabilities("unp", starts_with("unp"))
+
+full_pipeline02
+```
+
+```{r}
+expanded_pipeline02 <- expand_decisions(full_pipeline02)
+
+expanded_pipeline02
+```
+
+
+```{r}
+multiverse_results02 <- run_multiverse(expanded_pipeline02)
+
+multiverse_results02
+```
+
+# 5. Unpacking the multiverse results
+
+First, we'll unpack the model results like in the previous example:
+
+```{r}
+mod_summary02 <- reveal_model_parameters(multiverse_results02)
+
+mod_summary02
+```
+
+How do the median regression coefficients differ between IVs?
+
+```{r}
+mod_coef02 <- mod_summary02 |> 
+  filter(str_detect(parameter, "^unp")) |>
+  condense(.what = coefficient, .how = list(median = median))
+
+mod_coef02
+```
+
+Now let's calculate the proportion of p-values that were significant across the entire multiverse, grouped by IV:
+
+```{r}
+mod_p02 <- mod_summary02 |> 
+  filter(str_detect(parameter, "^unp")) |>
+  condense(.what = p, .how = ~sum(.x < .05)/n())
+
+mod_p02
+```
+
+
+```{r}
+mod_summary02 |>
+  filter(str_detect(parameter, "unp")) |> 
+  arrange(coefficient) |> # Arrange coefficients from smallest to largest
+  mutate(
+    p_sig = ifelse(p < .05, "sig", "non-sig"),  # Significant yes or no? Used for coloring the points 
+    order = 1:n()                               # Values for the x-axis
+  ) |> 
+  ggplot(aes(order, coefficient, color = p_sig)) + 
+  # Add a ribbon that shows the 95% confidence intervals
+  geom_ribbon(
+    aes(ymin = ci_low, ymax = ci_high, x = order),
+    fill = "gray90",
+    inherit.aes = F,
+    show.legend = F
+  ) +
+  geom_point(size = 3, shape = 19, show.legend = F) + 
+  geom_hline(aes(yintercept = 0), size = .5, linetype = "solid") +
+  geom_point( # Add a single point showing the median estimate
+    data = mod_coef02, # Using the summarized median coefficients we created above
+    aes(x = 25, y = coefficient_median),
+    shape = 1,
+    size = 3,
+    fill = "white",
+    stroke = 3,
+    show.legend = F,
+    inherit.aes = F
+    ) +
+  geom_text( # Add the median coefficient in text
+        data = mod_coef02,
+        aes(y = coefficient_median, label = paste0("\u03b2\ = ", as.character(round(coefficient_median,2))), x = 25),
+        nudge_y = -.01,
+        size = 3,
+        show.legend = F,
+        inherit.aes = F
+      ) +
+  geom_text( # Add text showing the proportion of significant p-values
+    data = mod_p02,
+        aes(x = 25, y = 0.1, label = paste0(round(p_1, 1)*100, "% of p-values < .05")),
+        size = 3,
+        show.legend = F,
+        inherit.aes = F
+      ) +
+    scale_color_manual(values = pval_colors) +
+      labs(
+        y = "Coefficient (standardized)\n",
+        x = ""
+      ) +
+      theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.line.x = element_blank()
+      )
+```
+```{r}
+reveal_reliabilities(multiverse_results02)
+```
+
+
 
