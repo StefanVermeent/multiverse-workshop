@@ -110,6 +110,9 @@ Making a multiverse pipeline is straightforward, but it is easy to make mistakes
 summarize_filter_ns(full_pipeline01)
 ```
 
+**EXERCISE 1:** Fix my mistake (and optionally, unnecessary decisions) in the multiverse pipeline.
+
+
 It is also possible to assess the size of our multiverse pipeline. For example, we can see..
 
 The total number of distinct analysis pipelines:
@@ -176,6 +179,21 @@ mod_summary01 <- reveal_model_parameters(multiverse_results01, .unpack_specs = "
 mod_summary01
 ```
 
+
+**EXERCISE 2:** Unpack the skewness and kurtosis statistics using `multitool::reveal()` (once for skewness and once for kurtosis). 
+
+```{r}
+# Unpack skewness
+
+
+# Unpack kurtosis
+
+
+```
+
+
+
+
 Using `condense`, we can summarise specific results. Let's start by summarizing the regression coefficients.
 
 ```{r}
@@ -195,6 +213,8 @@ mod_p <- mod_summary01 |>
 
 mod_p
 ```
+
+
 
 # 6. Visualizing the multiverse
 
