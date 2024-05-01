@@ -86,7 +86,7 @@ full_pipeline01 <- data |>
   add_filters(
     bot_detection    > 0.4, # Only keep participants who passed bot detection
     fullscreenenter == 1, # Only keep participants who entered fullscreen
-    fullscreenexit  == 1, # Only keep participants who stayed in fullscreen
+    fullscreenexit  == 0, # Only keep participants who stayed in fullscreen
     noise            < 2, # Only keep participants who reported noise-level of 0 or 1 (on scale of 0-4)
     noise            < 4,
     interrupted      == 0,  # Only keep participants who were not interrupted
@@ -112,7 +112,6 @@ summarize_filter_ns(full_pipeline01)
 
 **EXERCISE 1:** Fix my mistake (and optionally, unnecessary decisions) in the multiverse pipeline.
 
-
 It is also possible to assess the size of our multiverse pipeline. For example, we can see..
 
 The total number of distinct analysis pipelines:
@@ -126,8 +125,6 @@ The number of unique filtering decisions:
 ```{r}
 detect_n_filters(full_pipeline01)
 ```
-
-
 
 # 3. Expanding the pipeline specification
 
@@ -179,8 +176,7 @@ mod_summary01 <- reveal_model_parameters(multiverse_results01, .unpack_specs = "
 mod_summary01
 ```
 
-
-**EXERCISE 2:** Unpack the skewness and kurtosis statistics using `multitool::reveal()` (once for skewness and once for kurtosis). 
+**EXERCISE 2:** Unpack the skewness and kurtosis statistics using `multitool::reveal()` (once for skewness and once for kurtosis).
 
 ```{r}
 # Unpack skewness
@@ -190,9 +186,6 @@ mod_summary01
 
 
 ```
-
-
-
 
 Using `condense`, we can summarise specific results. Let's start by summarizing the regression coefficients.
 
@@ -213,8 +206,6 @@ mod_p <- mod_summary01 |>
 
 mod_p
 ```
-
-
 
 # 6. Visualizing the multiverse
 
@@ -420,20 +411,18 @@ spec_plot
 # Epilogue: Looping over variables
 
 ```{r}
-data02 <- read_csv('data.csv')
+data02 <- read_csv('data02.csv')
 
 data02
 ```
 
-When we loop over different variables, we can use `glue` syntax ({}) to refer to the variable.
-Below, we use "{iv}" as a placeholder to refer to the IV, which `multitool` will then automatically replace with the correct IV.
+When we loop over different variables, we can use `glue` syntax ({}) to refer to the variable. Below, we use "{iv}" as a placeholder to refer to the IV, which `multitool` will then automatically replace with the correct IV.
 
 ```{r}
 full_pipeline02 <- data02 |> 
   add_variables(var_group = "iv", matches("^unp")) |>
+  add_variables(var_group = "dv", shift1, shift2) |> 
   add_preprocess(process_name = "std", "mutate({iv} = scale({iv}) |> as.numeric())") |> 
-  add_model(model_desc = "lm", lm(shifting ~ {iv}))
+  add_model(model_desc = "lm", lm({dv} ~ {iv}))
 
 ```
-
-
