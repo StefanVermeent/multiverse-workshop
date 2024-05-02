@@ -86,7 +86,7 @@ full_pipeline01 <- data |>
   add_filters(
     bot_detection    > 0.4, # Only keep participants who passed bot detection
     fullscreenenter == 1, # Only keep participants who entered fullscreen
-    fullscreenexit  == 0, # Only keep participants who stayed in fullscreen
+    fullscreenexit  == 1, # Only keep participants who stayed in fullscreen
     noise            < 2, # Only keep participants who reported noise-level of 0 or 1 (on scale of 0-4)
     noise            < 4,
     interrupted      == 0,  # Only keep participants who were not interrupted
